@@ -1,21 +1,22 @@
-import React, { useReducer, useState } from 'react';
-import Todo from './Todo'
+import React, { useReducer, useRef, useState } from 'react';
+import Form from './components/Form/Form';
+import TableData from './components/TableData/TableData';
+import './App.css';
 
-const types = {
-  HANDLE_FORM_CHANGE: 'HANDLE_FORM_CHANGE',
-  RESET_FORM: 'RESET_FORM'
+export const DataContext = React.createContext();
+export const DataUpdateContext = React.createContext();
+
+const ACTIONS = {
+  NEW_STATE: 'new_state'
 }
 
-const initialState = { name: '', age: 0, maritalStatus: 'Single' };
+const newInitialState = { id: -1, name: '', age: 0, maritalStatus: 'Single' };
 
-function reducer(state, action) {
+const reducer = (state, action) => {
   switch (action.type) {
-    case types.HANDLE_FORM_CHANGE: {
-      const { name, value } = action.payload;
-      return { ...state, [name]: value }
-    }
-    case types.RESET_FORM: {
-      return { ...initialState }
+    case ACTIONS.NEW_STATE: {
+      const { updateIndex, selectedName, selectedAge, selectedMaritalStatus } = action.payload;
+      return { ...state, id: updateIndex, name: selectedName, age: selectedAge, maritalStatus: selectedMaritalStatus};
     }
     default: {
       return { ...state }
@@ -23,38 +24,32 @@ function reducer(state, action) {
   }
 }
 
-
 function App() {
   const [data, setData] = useState([]);
-  const [form, dispatch] = useReducer(reducer, initialState);
+  const formRef = useRef();
 
-  const handleFormChange = (name) => ({ target: { value } }) => {
-    dispatch({ type: types.HANDLE_FORM_CHANGE, payload: { name, value } });
+  const [newState, dispatch] = useReducer(reducer, newInitialState);
+
+  const handleUpdate = (i, selectedName, selectedAge, selectedMaritalStatus) => {
+    const updateIndex = i;
+    dispatch({ type: ACTIONS.NEW_STATE, payload: { updateIndex, selectedName, selectedAge, selectedMaritalStatus } });
+    formRef.current.name.focus();
+    
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setData([...data, { name: form.name, age: form.age, maritalStatus: form.maritalStatus }]);
-    dispatch({ type: types.RESET_FORM });
-  }
+  console.log(newState);
 
-  console.log('initialState...', initialState)
   return (
-
-    <div className="App">
-      <h1>To Do App</h1>
-      <form onSubmit={handleSubmit}>
-        <input type='text' placeholder='Name' value={form.name} onChange={handleFormChange('name')} />
-        <input type='text' placeholder='Age' value={form.age} onChange={handleFormChange('age')} />
-        <input type="radio" value="Married" checked={form.maritalStatus === 'Married'} onChange={handleFormChange('maritalStatus')} /> Married
-        <input type="radio" value="Single" checked={form.maritalStatus === 'Single'} onChange={handleFormChange('maritalStatus')} /> Single
-        <button>Submit</button>
-      </form>
-
-      {data.map((item, i) => (
-        <Todo key={`${item.name}-${i}`} item={item} />
-      ))}
-    </div>
+      <div className="App">
+        <h1>Records</h1>
+        
+        <DataContext.Provider value={data}>
+          <DataUpdateContext.Provider value={setData}>
+                <Form formRef={formRef} />
+                <TableData handleUpdate={handleUpdate} />
+          </DataUpdateContext.Provider>
+        </DataContext.Provider>
+      </div>
   );
 }
 
