@@ -1,55 +1,87 @@
-import React, { useReducer, useRef, useState } from 'react';
-import Form from './components/Form/Form';
-import TableData from './components/TableData/TableData';
-import './App.css';
+import React, { lazy, Suspense, useRef, useMemo, useReducer, useState, useCallback } from "react";
+import Typography from "@mui/material/Typography";
+import _ from "lodash";
 
-export const DataContext = React.createContext();
-export const DataUpdateContext = React.createContext();
+const Form = lazy(() => import('./components/Form').then((module) => ({ default: module.Form })));
+const TableData = lazy(() => import('./components/TableData').then((module) => ({ default: module.TableData })));
 
-const ACTIONS = {
-  NEW_STATE: 'new_state'
-}
+export const types = {
+  ON_EDIT_FORM: "ON_EDIT_FORM",
+  HANDLE_FORM_CHANGE: "HANDLE_FORM_CHANGE",
+  RESET_FORM: "RESET_FORM",
+};
 
-const newInitialState = { id: -1, name: '', age: 0, maritalStatus: 'Single' };
+const initialState = { name: "", age: "", maritalStatus: "" };
 
-const reducer = (state, action) => {
+function reducer(state, action) {
   switch (action.type) {
-    case ACTIONS.NEW_STATE: {
-      const { updateIndex, selectedName, selectedAge, selectedMaritalStatus } = action.payload;
-      return { ...state, id: updateIndex, name: selectedName, age: selectedAge, maritalStatus: selectedMaritalStatus};
+    case types.ON_EDIT_FORM: {
+      return { ...state, ...action.payload };
+    }
+    case types.HANDLE_FORM_CHANGE: {
+      const { name, value } = action.payload;
+      return { ...state, [name]: value };
+    }
+    case types.RESET_FORM: {
+      return { ...initialState };
     }
     default: {
-      return { ...state }
+      return { ...state };
     }
   }
 }
 
 function App() {
-  const [data, setData] = useState([]);
-  const formRef = useRef();
+  const prevFormData = useRef({});
+  const [ind, setInd] = useState(null);
+  const [data, setData] = useState([{ name: "John", age: 34, maritalStatus: "Single" }]);
+  const [form, dispatch] = useReducer(reducer, initialState);
 
-  const [newState, dispatch] = useReducer(reducer, newInitialState);
+  const editMode = useMemo(() => typeof ind === "number", [ind]);
 
-  const handleUpdate = (i, selectedName, selectedAge, selectedMaritalStatus) => {
-    const updateIndex = i;
-    dispatch({ type: ACTIONS.NEW_STATE, payload: { updateIndex, selectedName, selectedAge, selectedMaritalStatus } });
-    formRef.current.name.focus();
-    
-  }
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  console.log(newState);
+    if (!form.name || !form.age || !form.maritalStatus) return alert(`Form is not properly filled.`);
+
+    if (editMode) {
+      setData((_data) => {
+        _data[ind] = form;
+        return [..._data];
+      });
+      setInd(null);
+    } else {
+      setData((_data) => _data.concat.apply(_data, [form]));
+    }
+
+    dispatch({ type: types.RESET_FORM });
+  };
+
+  const handleUpdate = (index) => {
+    setInd(index);
+    const payload = data[index];
+    prevFormData.current = payload;
+    dispatch({ type: types.ON_EDIT_FORM, payload });
+  };
+
+  const handleDelete = useCallback((index) => setData((_data) => _data.filter((_, i) => index !== i)), [setData]);
+
+  const isFormChanged = useMemo(() => {
+    if (!editMode) return true;
+
+    return !_.isEqual(prevFormData.current, form);
+  }, [editMode, prevFormData.current, form]);
 
   return (
-      <div className="App">
-        <h1>Records</h1>
-        
-        <DataContext.Provider value={data}>
-          <DataUpdateContext.Provider value={setData}>
-                <Form formRef={formRef} />
-                <TableData handleUpdate={handleUpdate} />
-          </DataUpdateContext.Provider>
-        </DataContext.Provider>
-      </div>
+    <div className="App">
+      <Typography variant="h2" component="h2" sx={{ marginTop: "2.5rem", textAlign: "center" }}>
+        Records
+      </Typography>
+      <Suspense fallback={<div>loading...</div>}>
+        <Form formData={form} onSubmit={handleSubmit} dispatch={dispatch} editMode={editMode} isChanged={isFormChanged} />
+        <TableData data={data} handleUpdate={handleUpdate} handleDelete={handleDelete} index={ind} />
+      </Suspense>
+    </div>
   );
 }
 
