@@ -2,7 +2,7 @@ import React from "react";
 import Radio from "@mui/material/Radio";
 import FormControlLabel from "@mui/material/FormControlLabel";
 
-export const CustomFormControlLabel = ({ key, value, label, checked, onChange }) => {
+export const CustomFormControlLabel = ({ key, value, label, checked, onChange, control }) => {
   return (
     <FormControlLabel
       key={key}
@@ -10,7 +10,11 @@ export const CustomFormControlLabel = ({ key, value, label, checked, onChange })
       label={label}
       checked={checked}
       onChange={onChange}
-      control={<Radio size="small" />}
+      control={control}
     />
   );
+};
+
+CustomFormControlLabel.defaultProps = {
+  control: <Radio size="small" />
 };

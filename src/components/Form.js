@@ -1,9 +1,7 @@
 import React, { lazy } from "react";
 import { types } from "../App";
 import Button from "@mui/material/Button";
-import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import FormLabel from "@mui/material/FormLabel";
 import styles from "./style.module.css";
 
@@ -15,8 +13,6 @@ const CustomFormControlLabel = lazy(() =>
 );
 
 export const Form = ({ formData, onSubmit, dispatch, editMode, isChanged }) => {
-  console.log("Form render");
-
   const handleFormChange =
     (name) =>
     ({ target: { value } }) => {
@@ -24,10 +20,12 @@ export const Form = ({ formData, onSubmit, dispatch, editMode, isChanged }) => {
     };
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.formWrapper}>
       <form onSubmit={onSubmit} className={styles.submit}>
-        <CustomTextField type="text" value={formData.name} onChange={handleFormChange("name")} label="Name" />
-        <CustomTextField type="number" value={formData.age} onChange={handleFormChange("age")} label="Age" />
+        <CustomTextField value={formData.name} onChange={handleFormChange("name")} label="Name" placeholder="Name" />
+        <CustomTextField type="number" value={formData.age} onChange={handleFormChange("age")} label="Age" placeholder="Age" />
+        <CustomTextField value={formData.address} onChange={handleFormChange("address")} label="Address" placeholder="Address" />
+
         <div className={styles.married}>
           <FormLabel>Are you single or married?</FormLabel>
           <RadioGroup name="gender">
@@ -49,6 +47,7 @@ export const Form = ({ formData, onSubmit, dispatch, editMode, isChanged }) => {
             </div>
           </RadioGroup>
         </div>
+
         <Button
           size="medium"
           type="submit"
