@@ -29,7 +29,6 @@ function CustomModal({ children, open, toggleOpen }) {
       BackdropProps={{
         timeout: 500,
       }}
-      fullScreen
     >
       <Fade in={open}>
         <Box sx={style}>{children}</Box>

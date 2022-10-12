@@ -1,4 +1,4 @@
-import React, { useEffect, lazy, Suspense, useRef, useMemo, useReducer, useState, useCallback } from "react";
+import React, { lazy, Suspense, useRef, useMemo, useReducer, useState, useCallback } from "react";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import CustomModal from "./components/modal.component";
 import useDebounce from "./hooks/useDebounce";
@@ -16,7 +16,7 @@ export const types = {
   RESET_FORM: "RESET_FORM",
 };
 
-const initialState = { id: "", name: "", age: "", address: "", maritalStatus: "" };
+const initialState = { name: "", age: "", address: "", maritalStatus: "" };
 
 function reducer(state, action) {
   switch (action.type) {
@@ -25,7 +25,7 @@ function reducer(state, action) {
     }
     case types.HANDLE_FORM_CHANGE: {
       const { name, value } = action.payload;
-      return { ...state, [name]: value };
+      return { ...state, id: uuidv4(), [name]: value };
     }
     case types.RESET_FORM: {
       return { ...initialState };
@@ -36,84 +36,85 @@ function reducer(state, action) {
   }
 }
 
+const initialData = [
+  { id: uuidv4(), name: "John", age: 34, address: "Karachi", maritalStatus: "Single" },
+  { id: uuidv4(), name: "Sara", age: 90, address: "USA", maritalStatus: "Married" },
+  { id: uuidv4(), name: "Farrukh", age: 50, address: "Nepal", maritalStatus: "Single" },
+  { id: uuidv4(), name: "Javed", age: 59, address: "Karachi", maritalStatus: "Single" },
+];
+
 function App() {
   const prevFormData = useRef({});
-  const [ind, setInd] = useState(null);
-  const [data, setData] = useState([
-    { name: "John", age: 34, address: "Karachi", maritalStatus: "Single" },
-    { name: "Sara", age: 90, address: "USA", maritalStatus: "Married" },
-    { name: "Farrukh", age: 50, address: "Nepal", maritalStatus: "Single" },
-    { name: "Javed", age: 59, address: "Karachi", maritalStatus: "Single" },
-  ]);
-  const [filterRecords, setFilterRecords] = useState([]);
+  const [dataId, setDataId] = useState(null);
+  const [data, setData] = useState(initialData.slice(0));
   const [form, dispatch] = useReducer(reducer, initialState);
-  const [searchedData, setSearchedData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
 
   const searchText = useDebounce(searchQuery);
 
-  const toggleOpen = () => setOpen((prev) => !prev);
+  const toggleOpen = () => {
+    setOpen((prev) => !prev);
 
-  useEffect(() => {
-    const filterRecords = [...data];
-    const getRecords = filterRecords.filter((_record) => _record.name.toLowerCase().includes(searchText.toLowerCase()));
-    setSearchedData(getRecords);
-    setFilterRecords(getRecords);
-  }, [searchText]);
+    if (open) {
+      setDataId(null);
+      dispatch({ type: types.RESET_FORM });
+    }
+  };
+
+  const filterRecords = useMemo(() => {
+    if (!searchText) return data;
+
+    return data.filter((_record) => _record.name.toLowerCase().includes(searchText.toLowerCase()));
+  }, [data, searchText]);
 
   const handleSearchQuery = (query) => setSearchQuery(query);
 
-  const editMode = useMemo(() => typeof ind === "number", [ind]);
+  const editMode = useMemo(() => !!dataId, [dataId]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    (e) => {
+      e.preventDefault();
 
-    if (!form.name || !form.age || !form.address || !form.maritalStatus) return alert("Form is not properly filled.");
+      if (!form.name || !form.age || !form.address || !form.maritalStatus) return alert("Form is not properly filled.");
 
-    if (editMode) {
-      setData((_data) => {
-        _data[ind] = form;
-        return [..._data];
-      });
-      setInd(null);
-    } else {
-      if (searchQuery !== "" && form.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-        setFilterRecords((_record) => _record.concat.apply(_record, [form]));
-        setData((_data) => _data.concat.apply(_data, [form]));
+      if (editMode) {
+        const ind = data.findIndex((_data) => _data.id === dataId);
+
+        setData((prev) => {
+          const ele = prev[ind];
+          prev[ind] = { ...ele, ...form };
+          return prev.slice(0);
+        });
+
+        setDataId(null);
       } else {
-        setData((_data) => _data.concat.apply(_data, [form]));
+        const newRecord = Object.assign({}, form, { id: uuidv4() });
+        setData((_data) => _data.concat.apply(_data, [newRecord]));
       }
-    }
-    dispatch({ type: types.RESET_FORM });
-    setOpen(false);
-  };
+      dispatch({ type: types.RESET_FORM });
+      setOpen(false);
+    },
+    [form, editMode, data, setData, setDataId]
+  );
 
-  const handleUpdate = (index) => {
-    setInd(index);
-    if (searchQuery === "") {
-      const payload = data[index];
+  const handleUpdate = useCallback(
+    (id) => {
+      setDataId(id);
+      setOpen(true);
+
+      const payload = data.find((d) => d.id === id);
       prevFormData.current = payload;
       dispatch({ type: types.ON_EDIT_FORM, payload });
-    } else {
-      console.log("edit");
-      // const payload = filterRecords[index];
-      // prevFormData.current = payload;
-      // dispatch({ type: types.ON_EDIT_FORM, payload });
-    }
-    setOpen(true);
-  };
+    },
+    [data]
+  );
 
   const handleDelete = useCallback(
-    (index) => {
-      if (searchQuery !== "") {
-        setFilterRecords((_record) => _record.filter((_, i) => index !== i));
-        setData(data.filter((_data) => _data !== filterRecords[index]));
-      } else {
-        setData(data.filter((_data, i) => index !== i));
-      }
+    (id) => {
+      setData((prevData) => prevData.filter((_data) => _data.id !== id));
     },
-    [setData, setFilterRecords, searchQuery]
+    [setData]
   );
 
   const isFormChanged = useMemo(() => {
@@ -126,22 +127,14 @@ function App() {
     <div className="App">
       <Search searchQuery={searchQuery} handleSearchQuery={handleSearchQuery} />
       <Suspense fallback={<div>Loading...</div>}>
-        <TableData
-          data={data}
-          searchedData={searchedData}
-          handleUpdate={handleUpdate}
-          handleDelete={handleDelete}
-          searchQuery={searchQuery}
-          index={ind}
-          filterRecords={filterRecords}
-        />
+        <TableData dataId={dataId} data={filterRecords} handleUpdate={handleUpdate} handleDelete={handleDelete} />
         <AddCircleIcon onClick={() => setOpen(true)} sx={{ display: "flex", margin: "auto", marginTop: "2rem" }} />
         <CustomModal open={open} toggleOpen={toggleOpen}>
           <Form
             formData={form}
-            onSubmit={handleSubmit}
             dispatch={dispatch}
             editMode={editMode}
+            onSubmit={handleSubmit}
             isChanged={isFormChanged}
           />
         </CustomModal>
