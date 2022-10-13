@@ -9,6 +9,7 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Icon from "@mui/material/Icon";
 import styles from "./style.module.css";
+import { Typography } from "@mui/material";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -30,11 +31,11 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }));
 
 const tableColumns = [
-  { name: "Serial No.", align: "left" },
-  { name: "Name", align: "right" },
+  { name: "Serial No.", align: "center" },
+  { name: "Name", align: "left" },
   { name: "Age", align: "right" },
-  { name: "Address", align: "right" },
-  { name: "Marital Status", align: "right" },
+  { name: "Address", align: "left" },
+  { name: "Marital Status", align: "left" },
   { name: "Actions", align: "right" },
 ];
 
@@ -42,28 +43,34 @@ export const TableData = ({ handleDelete, data, dataId, handleUpdate }) => {
   return (
     <TableContainer component={Paper} sx={{ width: "90%", margin: "auto" }}>
       <Table sx={{ minWidth: 700 }} aria-label="customized table">
-        {data.length === 0 && <p className={styles.norecord}>No records in DB.</p>}
         {data.length > 0 && (
           <TableHead>
             <TableRow>
               {tableColumns.map((c) => (
-                <StyledTableCell key={`${c.name}-${c.align}`} align={c.align}>{c.name}</StyledTableCell>
+                <StyledTableCell key={`${c.name}-${c.align}`} align={c.align}>
+                  {c.name}
+                </StyledTableCell>
               ))}
             </TableRow>
           </TableHead>
         )}
         <TableBody>
+          {data.length === 0 && (
+            <tr>
+              <td style={{color: 'gray'}}>No records in DB.</td>
+            </tr>
+          )}
           {data.map((item, i) => {
             const isDisabled = dataId === item.id;
             return (
               <StyledTableRow key={`${item.name}-${i}`}>
-                <StyledTableCell component="th" scope="row">
+                <StyledTableCell align="center" component="th" scope="row">
                   {i + 1}
                 </StyledTableCell>
-                <StyledTableCell align="right">{item.name}</StyledTableCell>
+                <StyledTableCell align="left">{item.name}</StyledTableCell>
                 <StyledTableCell align="right">{item.age}</StyledTableCell>
-                <StyledTableCell align="right">{item.address}</StyledTableCell>
-                <StyledTableCell align="right">{item.maritalStatus}</StyledTableCell>
+                <StyledTableCell align="left">{item.address}</StyledTableCell>
+                <StyledTableCell align="left">{item.maritalStatus}</StyledTableCell>
                 <StyledTableCell align="right">
                   <Icon
                     color={isDisabled ? "disabled" : "primary"}

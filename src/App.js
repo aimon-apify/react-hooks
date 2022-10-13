@@ -126,17 +126,19 @@ function App() {
   return (
     <div className="App">
       <Search searchQuery={searchQuery} handleSearchQuery={handleSearchQuery} />
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>parent Loading...</div>}>
         <TableData dataId={dataId} data={filterRecords} handleUpdate={handleUpdate} handleDelete={handleDelete} />
         <AddCircleIcon onClick={() => setOpen(true)} sx={{ display: "flex", margin: "auto", marginTop: "2rem" }} />
         <CustomModal open={open} toggleOpen={toggleOpen}>
-          <Form
-            formData={form}
-            dispatch={dispatch}
-            editMode={editMode}
-            onSubmit={handleSubmit}
-            isChanged={isFormChanged}
-          />
+          <Suspense fallback={<div>modal Loading...</div>}>
+            <Form
+              formData={form}
+              dispatch={dispatch}
+              editMode={editMode}
+              onSubmit={handleSubmit}
+              isChanged={isFormChanged}
+            />
+          </Suspense>
         </CustomModal>
       </Suspense>
     </div>
