@@ -95,7 +95,7 @@ function App() {
       dispatch({ type: types.RESET_FORM });
       setOpen(false);
     },
-    [form, editMode, data, setData, setDataId]
+    [form, editMode, data, setData, setDataId, dataId]
   );
 
   const handleUpdate = useCallback(
@@ -121,7 +121,7 @@ function App() {
     if (!editMode) return true;
 
     return !_.isEqual(prevFormData.current, form);
-  }, [editMode, prevFormData.current, form]);
+  }, [editMode, form]);
 
   return (
     <div className="App">
