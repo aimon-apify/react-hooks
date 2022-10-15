@@ -1,0 +1,30 @@
+.formWrapper {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0 4rem 0;
+}
+
+.norecord {
+  color: gray;
+}
+ 
+.submit {
+  display: flex;
+  flex-direction: column;
+}
+
+.married {
+  display: flex;
+  margin: 1.5rem 0 1.5rem 0;
+}
+
+.gender {
+  display: flex;
+  align-items: center;
+  margin: -0.5rem 0 0 1rem;
+}
+
+.send {
+  width: 30%;
+}
+
